@@ -6,43 +6,44 @@ type Props = {
   setErrorMessage: (message: ERROR) => void;
 };
 
-export const ErrorField: React.FC<Props> = ({
-  errorMessage,
-  setErrorMessage,
-}) => {
-  const [timerId, setTimerId] = useState<NodeJS.Timeout | undefined>();
+export const ErrorField: React.FC<Props> = React.memo(
+  ({ errorMessage, setErrorMessage }) => {
+    const [timerId, setTimerId] = useState<NodeJS.Timeout | undefined>();
 
-  useEffect(() => {
-    if (errorMessage === ERROR.default) {
-      return;
-    }
+    useEffect(() => {
+      if (errorMessage === ERROR.no_error) {
+        return;
+      }
 
-    setTimerId(
-      setTimeout(() => {
-        setErrorMessage(ERROR.default);
-      }, 3000),
+      setTimerId(
+        setTimeout(() => {
+          setErrorMessage(ERROR.no_error);
+        }, 3000),
+      );
+
+      return () => {
+        clearTimeout(timerId);
+      };
+    }, [errorMessage]);
+
+    return (
+      <div
+        data-cy="ErrorNotification"
+        className={`notification is-danger is-light has-text-weight-normal ErrorNotification ${!errorMessage && 'hidden'}`}
+      >
+        <button
+          data-cy="HideErrorButton"
+          type="button"
+          className="delete"
+          onClick={() => {
+            setErrorMessage(ERROR.no_error);
+            clearTimeout(timerId);
+          }}
+        />
+        {errorMessage}
+      </div>
     );
+  },
+);
 
-    return () => {
-      clearTimeout(timerId);
-    };
-  }, [errorMessage]);
-
-  return (
-    <div
-      data-cy="ErrorNotification"
-      className={`notification is-danger is-light has-text-weight-normal ErrorNotification ${!errorMessage && 'hidden'}`}
-    >
-      <button
-        data-cy="HideErrorButton"
-        type="button"
-        className="delete"
-        onClick={() => {
-          setErrorMessage(ERROR.default);
-          clearTimeout(timerId);
-        }}
-      />
-      {errorMessage}
-    </div>
-  );
-};
+ErrorField.displayName = 'ErrorField';

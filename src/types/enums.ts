@@ -5,7 +5,7 @@ export enum FilterBy {
 }
 
 export enum ERROR {
-  default = '',
+  no_error = '',
   todos = 'Unable to load todos',
   title = 'Title should not be empty',
   add = 'Unable to add a todo',

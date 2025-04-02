@@ -1,6 +1,5 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-// import { EditForm } from './EditForm';
 import { Loader } from '../Loader/Loader';
 import { Todo } from '../../types/Todo';
 import { deleteTodo, changeTodoParams } from '../../api/todos';
@@ -15,17 +14,16 @@ type Props = {
   };
   onError: (message: ERROR) => void;
   setTodos: (callback: (prev: Todo[]) => Todo[]) => void;
-  isLoading: number[];
+  isLoading: boolean;
 };
 
-export const TodoItem: React.FC<Props> = ({
+const TodoItemComponent: React.FC<Props> = ({
   todo,
   loading: loadingList,
   onError,
   setTodos,
   isLoading,
 }) => {
-  const loading = isLoading.includes(todo.id);
   const [edit, setEdit] = useState(false);
   const [todoTitle, setTodoTitle] = useState<string>(todo.title);
   const editField = useRef<HTMLInputElement>(null);
@@ -52,20 +50,16 @@ export const TodoItem: React.FC<Props> = ({
     }
   }, []);
 
-  const updateTodo = async (
-    id: Todo['id'],
-    param: string,
-    paramValue: Todo['title'] | Todo['completed'],
-  ) => {
+  const updateTodo = async (id: Todo['id'], newData: Partial<Todo>) => {
     loadingList.adIdToLoadingList(id);
 
     try {
-      const resp = await changeTodoParams(id, param, paramValue);
+      const resp = await changeTodoParams(id, newData);
 
       setTodos(prev =>
         prev.map(item => {
           if (todo.id === item.id) {
-            return { ...item, [param]: paramValue };
+            return { ...item, ...newData };
           }
 
           return item;
@@ -107,7 +101,7 @@ export const TodoItem: React.FC<Props> = ({
       return;
     }
 
-    updateTodo(todo.id, 'title', newTitle);
+    updateTodo(todo.id, { title: newTitle });
   };
 
   const closeEditWithoutChange = (
@@ -127,7 +121,7 @@ export const TodoItem: React.FC<Props> = ({
           type="checkbox"
           className="todo__status"
           checked={todo.completed}
-          onClick={() => updateTodo(todo.id, 'completed', !todo.completed)}
+          onClick={() => updateTodo(todo.id, { completed: !todo.completed })}
         />
       </label>
       {edit ? (
@@ -161,7 +155,9 @@ export const TodoItem: React.FC<Props> = ({
         </>
       )}
 
-      <Loader loading={loading} />
+      <Loader loading={isLoading} />
     </div>
   );
 };
+
+export const TodoItem = React.memo(TodoItemComponent);

@@ -1,7 +1,7 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
 // import { UserWarning } from './UserWarning';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState, useMemo } from 'react';
 import { getTodos } from './api/todos';
 import { Todo } from './types/Todo';
 import { TodoList } from './components/TodoList/TodoList';
@@ -14,20 +14,30 @@ export const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
   const [filterQwery, setFilterQwery] = useState(FilterBy.All);
   const [errorMessage, setErrorMessage] = useState<ERROR | string>(
-    ERROR.default,
+    ERROR.no_error,
   );
+  const [todosLength, setTodosLength] = useState<number>(0);
   const [todosLoading, setTodosLoading] = useState<number[]>([]);
-
   // if (!USER_ID) {
   //   return <UserWarning />;
   // }
 
+  useEffect(() => {
+    if (
+      (todosLoading.length === 0 && todosLength !== todos.length) ||
+      errorMessage
+    ) {
+      setTodosLength(todos.length);
+    }
+  }, [todosLoading]);
+
   const loadTodos = useCallback(async () => {
     try {
-      setErrorMessage(ERROR.default);
+      setErrorMessage(ERROR.no_error);
       const data = await getTodos();
 
       setTodos(data);
+      setTodosLength(data.length);
     } catch (err) {
       setErrorMessage(ERROR.todos);
     } finally {
@@ -35,74 +45,62 @@ export const App: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    setTodosLoading([0]);
     loadTodos();
-    setTodosLoading([]);
   }, []);
 
   const adIdToLoadingList = useCallback((id: number) => {
-    setTodosLoading(prev => {
-      if (prev.length > 0) {
-        return [...prev, id];
-      }
-
-      return [id];
-    });
+    setTodosLoading(prev => [...prev, id]);
   }, []);
 
   const removeIdFromLoadingList = useCallback((id: number | null) => {
-    setTodosLoading(prev => {
-      if (prev.length > 1 && id !== null) {
-        return prev.filter(item => item !== id);
-      }
-
-      return [];
-    });
+    setTodosLoading(prev => prev.filter(item => item !== id));
   }, []);
 
   const filteredTodos = (qwery: FilterBy): Todo[] => {
     return todos.filter(item => {
-      if (qwery === FilterBy.Active) {
-        return !item.completed;
+      switch (qwery) {
+        case FilterBy.Active:
+          return !item.completed;
+        case FilterBy.Completed:
+          return item.completed;
+        default:
+          return true;
       }
-
-      if (qwery === FilterBy.Completed) {
-        return item.completed;
-      }
-
-      return true;
     });
   };
 
-  const visibleTodos = filteredTodos(filterQwery);
+  const visibleTodos = useMemo(
+    () => filteredTodos(filterQwery),
+    [todos, filterQwery],
+  );
 
   return (
     <div className="todoapp">
       <h1 className="todoapp__title">todos</h1>
       <div className="todoapp__content">
         <Header
+          todosLength={todosLength}
           setErrorMessage={setErrorMessage}
           setTodosLoading={setTodosLoading}
           setTodos={setTodos}
-          loading={{ adIdToLoadingList, removeIdFromLoadingList }}
+          loadingIdsState={{ adIdToLoadingList, removeIdFromLoadingList }}
           todos={todos}
         />
         {todos.length > 0 && (
           <TodoList
             todos={visibleTodos}
-            loading={{ adIdToLoadingList, removeIdFromLoadingList }}
+            loadingIdsState={{ adIdToLoadingList, removeIdFromLoadingList }}
             setErrorMessage={setErrorMessage}
             setTodos={setTodos}
             todosLoading={todosLoading}
           />
         )}
-        {/* Hide the footer if there are no todos */}
         {todos.length > 0 && (
           <Footer
             todos={todos}
             filterQwery={filterQwery}
             setFilterQwery={setFilterQwery}
-            loading={{ adIdToLoadingList, removeIdFromLoadingList }}
+            loadingIdsState={{ adIdToLoadingList, removeIdFromLoadingList }}
             setErrorMessage={setErrorMessage}
             setTodos={setTodos}
             todosLoading={todosLoading}

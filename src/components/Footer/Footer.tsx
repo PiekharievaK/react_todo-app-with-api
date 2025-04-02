@@ -10,7 +10,7 @@ type Props = {
   setErrorMessage: (value: ERROR) => void;
   setTodos: (callback: (prev: Todo[]) => Todo[]) => void;
   todosLoading: number[];
-  loading: {
+  loadingIdsState: {
     adIdToLoadingList: (id: number) => void;
     removeIdFromLoadingList: (id: number | null) => void;
   };
@@ -22,7 +22,7 @@ const footerComponent: React.FC<Props> = ({
   filterQwery,
   setFilterQwery,
   setErrorMessage,
-  loading,
+  loadingIdsState,
 }) => {
   const activeTodos = todos.filter(item => item.completed);
   const activeCount = todos.length - activeTodos.length || 0;
@@ -43,19 +43,19 @@ const footerComponent: React.FC<Props> = ({
 
   const onError = () => {
     setErrorMessage(ERROR.delete);
-    loading.removeIdFromLoadingList(null);
+    loadingIdsState.removeIdFromLoadingList(null);
   };
 
   const deleteAllCompleted = () => {
     activeTodos.forEach(async item => {
-      loading.adIdToLoadingList(item.id);
+      loadingIdsState.adIdToLoadingList(item.id);
       try {
         await deleteTodo(item.id);
         setTodos(prev => prev.filter(todo => todo.id !== item.id));
       } catch (error) {
         onError();
       } finally {
-        loading.removeIdFromLoadingList(item.id);
+        loadingIdsState.removeIdFromLoadingList(item.id);
       }
     });
   };
@@ -76,9 +76,7 @@ const footerComponent: React.FC<Props> = ({
               key={item}
               className={`filter__link ${filterQwery === filterValue && 'selected'}`}
               data-cy={filterValue}
-              onClick={e =>
-                filterChange(e.currentTarget.dataset.cy as FilterBy)
-              }
+              onClick={() => filterChange(filterValue)}
             >
               {item}
             </a>

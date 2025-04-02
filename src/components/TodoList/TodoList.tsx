@@ -5,7 +5,7 @@ import { ERROR } from '../../types/enums';
 
 type Props = {
   todos: Todo[];
-  loading: {
+  loadingIdsState: {
     adIdToLoadingList: (id: number) => void;
     removeIdFromLoadingList: (id: number | null) => void;
   };
@@ -16,7 +16,7 @@ type Props = {
 
 export const TodoList: React.FC<Props> = ({
   todos,
-  loading,
+  loadingIdsState: loading,
   setErrorMessage,
   setTodos,
   todosLoading,
@@ -39,7 +39,7 @@ export const TodoList: React.FC<Props> = ({
           }}
           onError={onError}
           setTodos={setTodos}
-          isLoading={todosLoading}
+          isLoading={todosLoading.includes(todo.id)}
         />
       ))}
     </section>

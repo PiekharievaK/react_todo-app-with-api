@@ -16,9 +16,8 @@ export const deleteTodo = (todoId: number) => {
 };
 
 export const changeTodoParams = (
-  todoId: number,
-  param: string,
-  paramValue: Todo['title'] | Todo['completed'],
+  todoId: Todo['id'],
+  newData: Partial<Todo>,
 ) => {
-  return client.patch(`/todos/${todoId}`, { [param]: paramValue });
+  return client.patch(`/todos/${todoId}`, newData);
 };
