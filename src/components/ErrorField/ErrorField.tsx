@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { ERROR } from '../../types/enums';
+import cn from 'classnames';
 
 type Props = {
   errorMessage: string;
@@ -29,7 +30,12 @@ export const ErrorField: React.FC<Props> = React.memo(
     return (
       <div
         data-cy="ErrorNotification"
-        className={`notification is-danger is-light has-text-weight-normal ErrorNotification ${!errorMessage && 'hidden'}`}
+        className={cn(
+          'notification is-danger is-light has-text-weight-normal',
+          {
+            hidden: !errorMessage,
+          },
+        )}
       >
         <button
           data-cy="HideErrorButton"

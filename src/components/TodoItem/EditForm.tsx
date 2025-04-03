@@ -1,4 +1,5 @@
 import React, { LegacyRef } from 'react';
+
 type Props = {
   onFormSubmit: (event?: React.FormEvent<HTMLFormElement>) => void;
   todoTitle: string;

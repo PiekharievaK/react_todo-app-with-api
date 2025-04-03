@@ -2,6 +2,7 @@ import React from 'react';
 import { ERROR, FilterBy } from '../../types/enums';
 import { Todo } from '../../types/Todo';
 import { deleteTodo } from '../../api/todos';
+import cn from 'classnames';
 
 type Props = {
   todos: Todo[];
@@ -16,7 +17,7 @@ type Props = {
   };
 };
 
-const footerComponent: React.FC<Props> = ({
+export const Footer: React.FC<Props> = ({
   todos,
   setTodos,
   filterQwery,
@@ -74,7 +75,9 @@ const footerComponent: React.FC<Props> = ({
             <a
               href="#/"
               key={item}
-              className={`filter__link ${filterQwery === filterValue && 'selected'}`}
+              className={cn('filter__link', {
+                selected: filterQwery === filterValue,
+              })}
               data-cy={filterValue}
               onClick={() => filterChange(filterValue)}
             >
@@ -96,12 +99,3 @@ const footerComponent: React.FC<Props> = ({
     </footer>
   );
 };
-
-const areLoaded = (prevProps: Props, nextProps: Props) => {
-  const todosChanged = prevProps.todos !== nextProps.todos;
-  const todosLoadingEmpty = nextProps.todosLoading.length !== 0;
-
-  return todosChanged && todosLoadingEmpty;
-};
-
-export const Footer = React.memo(footerComponent, areLoaded);

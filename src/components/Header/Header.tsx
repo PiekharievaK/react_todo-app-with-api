@@ -1,9 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ERROR } from '../../types/enums';
 import { addTodo, changeTodoParams, USER_ID } from '../../api/todos';
 import { Todo } from '../../types/Todo';
+import { ERROR } from '../../types/enums';
+import cn from 'classnames';
 
 type Props = {
+  todos: Todo[];
   todosLength: number;
   setErrorMessage: (value: ERROR | string) => void;
   setTodosLoading: (id: number[]) => void;
@@ -12,7 +14,13 @@ type Props = {
     adIdToLoadingList: (id: number) => void;
     removeIdFromLoadingList: (id: number | null) => void;
   };
-  todos: Todo[];
+  setTempTodo: (
+    tempTodo: {
+      type: 'add';
+      todo?: Todo;
+      todoId?: Todo['id'];
+    } | null,
+  ) => void;
 };
 
 export const Header: React.FC<Props> = React.memo(
@@ -23,11 +31,10 @@ export const Header: React.FC<Props> = React.memo(
     setTodos,
     loadingIdsState,
     todos,
+    setTempTodo,
   }) => {
     const [isLoading, setIsLoading] = useState(false);
-    const [completed, setCompleted] = useState(
-      todos.every(item => item.completed === true),
-    );
+    const completed = !todos.every(item => item.completed === true);
     const inputField = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
@@ -38,15 +45,13 @@ export const Header: React.FC<Props> = React.memo(
       if (todos?.length < 0) {
         return;
       }
-
-      setCompleted(!todos.every(item => item.completed === true));
     }, [todos]);
 
     const addItem = async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
       if (inputField.current) {
         const value = inputField.current.value;
-        let id = 0;
+        const id = 0;
 
         try {
           if (value.trim() === '') {
@@ -61,38 +66,20 @@ export const Header: React.FC<Props> = React.memo(
 
           setIsLoading(true);
           setTodosLoading([id]);
-
-          setTodos(prev => {
-            id =
-              prev.length > 0
-                ? Math.max(...prev.map((item: Todo) => item.id)) + 1
-                : 1;
-
-            setTodosLoading([id]);
-
-            return [...prev, { ...todo, id }];
-          });
+          setTempTodo({ type: 'add', todo: { ...todo, id } });
 
           const res = await addTodo(todo);
 
-          setTodos(prev => {
-            return prev.map(item => {
-              if (item.id === id) {
-                return res as Todo;
-              }
-
-              return item;
-            });
-          });
+          setTodos(prev => [...prev, res as Todo]);
 
           inputField.current.focus();
           inputField.current.value = '';
         } catch (err) {
           const error = err as Error;
 
-          setTodos(prev => prev.filter(item => id !== item.id));
           setErrorMessage(error.message || ERROR.add);
         } finally {
+          setTempTodo(null);
           setIsLoading(false);
           setTodosLoading([]);
         }
@@ -126,7 +113,7 @@ export const Header: React.FC<Props> = React.memo(
         {todos.length > 0 && (
           <button
             type="button"
-            className={`todoapp__toggle-all ${!completed && 'active'}`}
+            className={cn('todoapp__toggle-all', { active: !completed })}
             data-cy="ToggleAllButton"
             onClick={() => CompleteAll()}
           />

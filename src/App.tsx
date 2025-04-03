@@ -2,13 +2,15 @@
 /* eslint-disable jsx-a11y/control-has-associated-label */
 // import { UserWarning } from './UserWarning';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
-import { getTodos } from './api/todos';
-import { Todo } from './types/Todo';
+
 import { TodoList } from './components/TodoList/TodoList';
 import { Footer } from './components/Footer/Footer';
 import { Header } from './components/Header/Header';
 import { ErrorField } from './components/ErrorField/ErrorField';
+
+import { Todo } from './types/Todo';
 import { FilterBy, ERROR } from './types/enums';
+import { getTodos } from './api/todos';
 
 export const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -16,28 +18,21 @@ export const App: React.FC = () => {
   const [errorMessage, setErrorMessage] = useState<ERROR | string>(
     ERROR.no_error,
   );
-  const [todosLength, setTodosLength] = useState<number>(0);
+  const [tempTodo, setTempTodo] = useState<{
+    type: 'add' | 'remove';
+    todo?: Todo;
+    todoId?: Todo['id'];
+  } | null>(null);
   const [todosLoading, setTodosLoading] = useState<number[]>([]);
   // if (!USER_ID) {
   //   return <UserWarning />;
   // }
 
-  useEffect(() => {
-    if (
-      (todosLoading.length === 0 && todosLength !== todos.length) ||
-      errorMessage
-    ) {
-      setTodosLength(todos.length);
-    }
-  }, [todosLoading]);
-
   const loadTodos = useCallback(async () => {
     try {
-      setErrorMessage(ERROR.no_error);
       const data = await getTodos();
 
       setTodos(data);
-      setTodosLength(data.length);
     } catch (err) {
       setErrorMessage(ERROR.todos);
     } finally {
@@ -56,8 +51,8 @@ export const App: React.FC = () => {
     setTodosLoading(prev => prev.filter(item => item !== id));
   }, []);
 
-  const filteredTodos = (qwery: FilterBy): Todo[] => {
-    return todos.filter(item => {
+  const filteredTodos = (qwery: FilterBy, list: Todo[]): Todo[] => {
+    return list.filter(item => {
       switch (qwery) {
         case FilterBy.Active:
           return !item.completed;
@@ -69,21 +64,38 @@ export const App: React.FC = () => {
     });
   };
 
-  const visibleTodos = useMemo(
-    () => filteredTodos(filterQwery),
-    [todos, filterQwery],
-  );
+  const visibleTodos = useMemo(() => {
+    let todoList = [...todos];
+
+    if (tempTodo) {
+      switch (tempTodo.type) {
+        case 'add':
+          if (tempTodo.todo) {
+            todoList = [...todoList, tempTodo.todo];
+          }
+
+          break;
+        case 'remove':
+          todoList = todoList.filter(item => item.id !== tempTodo.todoId);
+          break;
+        default:
+      }
+    }
+
+    return filteredTodos(filterQwery, todoList);
+  }, [todos, filterQwery, tempTodo]);
 
   return (
     <div className="todoapp">
       <h1 className="todoapp__title">todos</h1>
       <div className="todoapp__content">
         <Header
-          todosLength={todosLength}
+          todosLength={todos.length}
           setErrorMessage={setErrorMessage}
           setTodosLoading={setTodosLoading}
           setTodos={setTodos}
           loadingIdsState={{ adIdToLoadingList, removeIdFromLoadingList }}
+          setTempTodo={setTempTodo}
           todos={todos}
         />
         {todos.length > 0 && (
@@ -93,6 +105,7 @@ export const App: React.FC = () => {
             setErrorMessage={setErrorMessage}
             setTodos={setTodos}
             todosLoading={todosLoading}
+            setTempTodo={setTempTodo}
           />
         )}
         {todos.length > 0 && (

@@ -1,28 +1,40 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
+
 import { Loader } from '../Loader/Loader';
 import { Todo } from '../../types/Todo';
+import { EditForm } from './EditForm';
+
 import { deleteTodo, changeTodoParams } from '../../api/todos';
 import { ERROR } from '../../types/enums';
-import { EditForm } from './EditForm';
+
+import cn from 'classnames';
 
 type Props = {
   todo: Todo;
-  loading: {
+  loadingList: {
     adIdToLoadingList: (id: number) => void;
     removeIdFromLoadingList: (id: number) => void;
   };
   onError: (message: ERROR) => void;
   setTodos: (callback: (prev: Todo[]) => Todo[]) => void;
   isLoading: boolean;
+  setTempTodo: (
+    tempTodo: {
+      type: 'remove';
+      todo?: Todo;
+      todoId?: Todo['id'];
+    } | null,
+  ) => void;
 };
 
 const TodoItemComponent: React.FC<Props> = ({
   todo,
-  loading: loadingList,
+  loadingList,
   onError,
   setTodos,
   isLoading,
+  setTempTodo,
 }) => {
   const [edit, setEdit] = useState(false);
   const [todoTitle, setTodoTitle] = useState<string>(todo.title);
@@ -37,14 +49,17 @@ const TodoItemComponent: React.FC<Props> = ({
       loadingList.adIdToLoadingList(id);
       const resp = await deleteTodo(id);
 
-      setTodos(prev => prev.filter(item => todo.id !== item.id));
+      setTempTodo({ type: 'remove', todoId: todo.id });
+
       if (!resp) {
-        setTodos(prev => [...prev, todo]);
         throw new Error(ERROR.delete);
       }
+
+      setTodos(prev => prev.filter(item => todo.id !== item.id));
     } catch (error) {
       onError(ERROR.delete);
     } finally {
+      setTempTodo(null);
       loadingList.removeIdFromLoadingList(id);
       setEdit(false);
     }
@@ -114,7 +129,7 @@ const TodoItemComponent: React.FC<Props> = ({
   };
 
   return (
-    <div data-cy="Todo" className={`todo ${todo.completed ? 'completed' : ''}`}>
+    <div data-cy="Todo" className={cn('todo', { completed: todo.completed })}>
       <label className="todo__status-label">
         <input
           data-cy="TodoStatus"

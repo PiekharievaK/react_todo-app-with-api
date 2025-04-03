@@ -1,17 +1,24 @@
 import React from 'react';
-import { Todo } from '../../types/Todo';
 import { TodoItem } from '../TodoItem/TodoItem';
+import { Todo } from '../../types/Todo';
 import { ERROR } from '../../types/enums';
 
 type Props = {
   todos: Todo[];
+  setErrorMessage: (value: ERROR) => void;
+  setTodos: (callback: (prev: Todo[]) => Todo[]) => void;
+  todosLoading: number[];
   loadingIdsState: {
     adIdToLoadingList: (id: number) => void;
     removeIdFromLoadingList: (id: number | null) => void;
   };
-  setErrorMessage: (value: ERROR) => void;
-  setTodos: (callback: (prev: Todo[]) => Todo[]) => void;
-  todosLoading: number[];
+  setTempTodo: (
+    tempTodo: {
+      type: 'remove';
+      todo?: Todo;
+      todoId?: Todo['id'];
+    } | null,
+  ) => void;
 };
 
 export const TodoList: React.FC<Props> = ({
@@ -20,6 +27,7 @@ export const TodoList: React.FC<Props> = ({
   setErrorMessage,
   setTodos,
   todosLoading,
+  setTempTodo,
 }) => {
   const onError = (message: ERROR) => {
     setErrorMessage(message);
@@ -33,13 +41,14 @@ export const TodoList: React.FC<Props> = ({
         <TodoItem
           todo={todo}
           key={todo.id}
-          loading={{
+          loadingList={{
             adIdToLoadingList: loading.adIdToLoadingList,
             removeIdFromLoadingList: loading.removeIdFromLoadingList,
           }}
           onError={onError}
           setTodos={setTodos}
           isLoading={todosLoading.includes(todo.id)}
+          setTempTodo={setTempTodo}
         />
       ))}
     </section>
