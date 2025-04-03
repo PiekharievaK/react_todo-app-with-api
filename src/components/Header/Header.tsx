@@ -6,7 +6,6 @@ import cn from 'classnames';
 
 type Props = {
   todos: Todo[];
-  todosLength: number;
   setErrorMessage: (value: ERROR | string) => void;
   setTodosLoading: (id: number[]) => void;
   setTodos: (callback: (prev: Todo[]) => Todo[]) => void;
@@ -25,7 +24,6 @@ type Props = {
 
 export const Header: React.FC<Props> = React.memo(
   ({
-    todosLength,
     setErrorMessage,
     setTodosLoading,
     setTodos,
@@ -39,13 +37,7 @@ export const Header: React.FC<Props> = React.memo(
 
     useEffect(() => {
       inputField.current?.focus();
-    }, [todosLength, isLoading]);
-
-    useEffect(() => {
-      if (todos?.length < 0) {
-        return;
-      }
-    }, [todos]);
+    }, [todos.length, isLoading]);
 
     const addItem = async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
