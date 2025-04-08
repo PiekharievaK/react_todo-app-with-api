@@ -4,6 +4,11 @@ export enum FilterBy {
   Completed = 'FilterLinkCompleted',
 }
 
+export enum TempTodoAction {
+  add,
+  remove,
+}
+
 export enum ERROR {
   no_error = '',
   todos = 'Unable to load todos',

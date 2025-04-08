@@ -6,7 +6,7 @@ import { Todo } from '../../types/Todo';
 import { EditForm } from './EditForm';
 
 import { deleteTodo, changeTodoParams } from '../../api/todos';
-import { ERROR } from '../../types/enums';
+import { ERROR, TempTodoAction } from '../../types/enums';
 
 import cn from 'classnames';
 
@@ -21,7 +21,7 @@ type Props = {
   isLoading: boolean;
   setTempTodo: (
     tempTodo: {
-      type: 'remove';
+      type: TempTodoAction;
       todo?: Todo;
       todoId?: Todo['id'];
     } | null,
@@ -49,7 +49,7 @@ const TodoItemComponent: React.FC<Props> = ({
       loadingList.adIdToLoadingList(id);
       const resp = await deleteTodo(id);
 
-      setTempTodo({ type: 'remove', todoId: todo.id });
+      setTempTodo({ type: TempTodoAction.remove, todoId: todo.id });
 
       if (!resp) {
         throw new Error(ERROR.delete);

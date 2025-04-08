@@ -1,6 +1,5 @@
 /* eslint-disable jsx-a11y/label-has-associated-control */
 /* eslint-disable jsx-a11y/control-has-associated-label */
-// import { UserWarning } from './UserWarning';
 import React, { useCallback, useEffect, useState, useMemo } from 'react';
 
 import { TodoList } from './components/TodoList/TodoList';
@@ -9,8 +8,8 @@ import { Header } from './components/Header/Header';
 import { ErrorField } from './components/ErrorField/ErrorField';
 
 import { Todo } from './types/Todo';
-import { FilterBy, ERROR } from './types/enums';
-import { getTodos } from './api/todos';
+import { FilterBy, ERROR, TempTodoAction } from './types/enums';
+import { addTodo, getTodos, USER_ID } from './api/todos';
 
 export const App: React.FC = () => {
   const [todos, setTodos] = useState<Todo[]>([]);
@@ -19,14 +18,11 @@ export const App: React.FC = () => {
     ERROR.no_error,
   );
   const [tempTodo, setTempTodo] = useState<{
-    type: 'add' | 'remove';
+    type: TempTodoAction;
     todo?: Todo;
     todoId?: Todo['id'];
   } | null>(null);
   const [todosLoading, setTodosLoading] = useState<number[]>([]);
-  // if (!USER_ID) {
-  //   return <UserWarning />;
-  // }
 
   const loadTodos = useCallback(async () => {
     try {
@@ -35,9 +31,40 @@ export const App: React.FC = () => {
       setTodos(data);
     } catch (err) {
       setErrorMessage(ERROR.todos);
-    } finally {
     }
   }, []);
+
+  const addItem = async (inputField: HTMLInputElement) => {
+    const value = inputField.value;
+    const id = 0;
+
+    try {
+      if (value.trim() === '') {
+        throw new Error(ERROR.title);
+      }
+
+      const todo: Omit<Todo, 'id'> = {
+        title: value.trim(),
+        userId: USER_ID,
+        completed: false,
+      };
+
+      setTodosLoading([id]);
+      setTempTodo({ type: TempTodoAction.add, todo: { ...todo, id } });
+
+      const res = await addTodo(todo);
+
+      setTodos(prev => [...prev, res as Todo]);
+    } catch (err) {
+      const error = err as Error;
+
+      setErrorMessage(error.message || ERROR.add);
+      throw new Error(ERROR.add);
+    } finally {
+      setTempTodo(null);
+      setTodosLoading([]);
+    }
+  };
 
   useEffect(() => {
     loadTodos();
@@ -58,7 +85,7 @@ export const App: React.FC = () => {
           return !item.completed;
         case FilterBy.Completed:
           return item.completed;
-        default:
+        case FilterBy.All:
           return true;
       }
     });
@@ -69,16 +96,15 @@ export const App: React.FC = () => {
 
     if (tempTodo) {
       switch (tempTodo.type) {
-        case 'add':
+        case TempTodoAction.add:
           if (tempTodo.todo) {
             todoList = [...todoList, tempTodo.todo];
           }
 
           break;
-        case 'remove':
+        case TempTodoAction.remove:
           todoList = todoList.filter(item => item.id !== tempTodo.todoId);
           break;
-        default:
       }
     }
 
@@ -91,10 +117,9 @@ export const App: React.FC = () => {
       <div className="todoapp__content">
         <Header
           setErrorMessage={setErrorMessage}
-          setTodosLoading={setTodosLoading}
+          addItem={addItem}
           setTodos={setTodos}
           loadingIdsState={{ adIdToLoadingList, removeIdFromLoadingList }}
-          setTempTodo={setTempTodo}
           todos={todos}
         />
         {todos.length > 0 && (

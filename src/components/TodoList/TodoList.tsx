@@ -1,7 +1,7 @@
 import React from 'react';
 import { TodoItem } from '../TodoItem/TodoItem';
 import { Todo } from '../../types/Todo';
-import { ERROR } from '../../types/enums';
+import { ERROR, TempTodoAction } from '../../types/enums';
 
 type Props = {
   todos: Todo[];
@@ -14,7 +14,7 @@ type Props = {
   };
   setTempTodo: (
     tempTodo: {
-      type: 'remove';
+      type: TempTodoAction;
       todo?: Todo;
       todoId?: Todo['id'];
     } | null,

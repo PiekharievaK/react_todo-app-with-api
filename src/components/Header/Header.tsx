@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { addTodo, changeTodoParams, USER_ID } from '../../api/todos';
+import { changeTodoParams } from '../../api/todos';
 import { Todo } from '../../types/Todo';
 import { ERROR } from '../../types/enums';
 import cn from 'classnames';
@@ -7,30 +7,16 @@ import cn from 'classnames';
 type Props = {
   todos: Todo[];
   setErrorMessage: (value: ERROR | string) => void;
-  setTodosLoading: (id: number[]) => void;
   setTodos: (callback: (prev: Todo[]) => Todo[]) => void;
   loadingIdsState: {
     adIdToLoadingList: (id: number) => void;
     removeIdFromLoadingList: (id: number | null) => void;
   };
-  setTempTodo: (
-    tempTodo: {
-      type: 'add';
-      todo?: Todo;
-      todoId?: Todo['id'];
-    } | null,
-  ) => void;
+  addItem: (inpunElement: HTMLInputElement) => Promise<void>;
 };
 
 export const Header: React.FC<Props> = React.memo(
-  ({
-    setErrorMessage,
-    setTodosLoading,
-    setTodos,
-    loadingIdsState,
-    todos,
-    setTempTodo,
-  }) => {
+  ({ setErrorMessage, setTodos, addItem, loadingIdsState, todos }) => {
     const [isLoading, setIsLoading] = useState(false);
     const completed = !todos.every(item => item.completed === true);
     const inputField = useRef<HTMLInputElement>(null);
@@ -39,46 +25,21 @@ export const Header: React.FC<Props> = React.memo(
       inputField.current?.focus();
     }, [todos.length, isLoading]);
 
-    const addItem = async (event: React.FormEvent<HTMLFormElement>) => {
+    const onFormSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
       event.preventDefault();
+      setIsLoading(true);
       if (inputField.current) {
-        const value = inputField.current.value;
-        const id = 0;
-
         try {
-          if (value.trim() === '') {
-            throw new Error(ERROR.title);
-          }
-
-          const todo: Omit<Todo, 'id'> = {
-            title: value.trim(),
-            userId: USER_ID,
-            completed: false,
-          };
-
-          setIsLoading(true);
-          setTodosLoading([id]);
-          setTempTodo({ type: 'add', todo: { ...todo, id } });
-
-          const res = await addTodo(todo);
-
-          setTodos(prev => [...prev, res as Todo]);
-
-          inputField.current.focus();
+          await addItem(inputField.current);
           inputField.current.value = '';
-        } catch (err) {
-          const error = err as Error;
-
-          setErrorMessage(error.message || ERROR.add);
+        } catch (error) {
         } finally {
-          setTempTodo(null);
           setIsLoading(false);
-          setTodosLoading([]);
         }
       }
     };
 
-    const CompleteAll = () => {
+    const completeAll = () => {
       const status = completed;
       const notInStatus = todos.filter(item => item.completed !== status);
 
@@ -107,11 +68,11 @@ export const Header: React.FC<Props> = React.memo(
             type="button"
             className={cn('todoapp__toggle-all', { active: !completed })}
             data-cy="ToggleAllButton"
-            onClick={() => CompleteAll()}
+            onClick={() => completeAll()}
           />
         )}
 
-        <form onSubmit={addItem}>
+        <form onSubmit={onFormSubmit}>
           <input
             data-cy="NewTodoField"
             type="text"
