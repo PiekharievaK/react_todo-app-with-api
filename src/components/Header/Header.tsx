@@ -32,8 +32,8 @@ export const Header: React.FC<Props> = React.memo(
         try {
           await addItem(inputField.current);
           inputField.current.value = '';
+          setIsLoading(false);
         } catch (error) {
-        } finally {
           setIsLoading(false);
         }
       }
